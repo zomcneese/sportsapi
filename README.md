@@ -3,10 +3,15 @@ Demo of Spring boot, Spring data, and mongo embedded.  Using sports data as an e
 Learning example
 
 To use, clone the repo
+
 git clone https://github.com/ergobot/sportsapi.git
+
 Go into the directory
+
 cd sportsapi
+
 Start the application
+
 gradle bootRun
 
 To view the data, go to your browser, postman, or curls
