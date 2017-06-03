@@ -1,25 +1,27 @@
 package com.sportsdata.tracker;
 
-
-import com.sportsdata.tracker.player.Player;
-import com.sportsdata.tracker.player.PlayerRepository;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.sportsdata.tracker.team.Roster;
+import com.sportsdata.tracker.team.RosterDeserializer;
 import com.sportsdata.tracker.team.Team;
 import com.sportsdata.tracker.team.TeamRepository;
-import io.swagger.annotations.Authorization;
+import org.apache.commons.io.IOUtils;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Iterator;
+
 @SpringBootApplication
 public class SportsApiApplication implements CommandLineRunner{
 
-
     @Autowired
     TeamRepository teamRepository;
-
-    @Autowired
-    PlayerRepository playerRepository;
 
     public static void main(String[] args) {
         SpringApplication.run(SportsApiApplication.class, args);
@@ -28,73 +30,44 @@ public class SportsApiApplication implements CommandLineRunner{
     @Override
     public void run(String... args) throws Exception {
 
-        Team alpha = new Team();
-        alpha.setName("Alpha Alliance");
-        alpha.setCity("Seaside");
-        alpha.setState("California");
-
-        Team sierra = new Team();
-        sierra.setName("Sierra Sentinels");
-        sierra.setCity("Silver Spring");
-        sierra.setState("Maryland");
-
-        Team foxtrot = new Team();
-        foxtrot.setName("Foxtrot Fliers");
-        foxtrot.setCity("Galveston");
-        foxtrot.setState("Texas");
-
-        teamRepository.save(alpha);
-        teamRepository.save(sierra);
-        teamRepository.save(foxtrot);
-
-        Player alphaTed = new Player();
-        alphaTed.setName("Dave Anderson");
-        alphaTed.setNumber("20");
-        alphaTed.setPerformanceScore(2.5d);
-        alphaTed.setTeam(alpha);
-
-        Player alphaJohn = new Player();
-        alphaJohn.setName("John Shepard");
-        alphaJohn.setNumber("30");
-        alphaJohn.setPerformanceScore(3.0d);
-        alphaJohn.setTeam(alpha);
-
-        Player sierraSteve = new Player();
-        sierraSteve.setName("Steve Polychronopolous");
-        sierraSteve.setNumber("11");
-        sierraSteve.setPerformanceScore(1.0d);
-        sierraSteve.setTeam(sierra);
-
-        Player sierraJane = new Player();
-        sierraJane.setName("Jane Doe");
-        sierraJane.setNumber("13");
-        sierraJane.setPerformanceScore(3.9d);
-        sierraJane.setTeam(sierra);
-
-        Player foxtrotMelida = new Player();
-        foxtrotMelida.setName("Melinda Thomas");
-        foxtrotMelida.setNumber("29");
-        foxtrotMelida.setPerformanceScore(3.7d);
-        foxtrotMelida.setTeam(foxtrot);
-
-        Player foxtrotAntonio = new Player();
-        foxtrotAntonio.setName("Antonio Calculon Sr.");
-        foxtrotAntonio.setNumber("38");
-        foxtrotAntonio.setPerformanceScore(2.0d);
-        foxtrotAntonio.setTeam(foxtrot);
-
-        playerRepository.save(alphaJohn);
-        playerRepository.save(alphaTed);
-        playerRepository.save(sierraJane);
-        playerRepository.save(sierraSteve);
-        playerRepository.save(foxtrotAntonio);
-        playerRepository.save(foxtrotMelida);
+        //Get file from resources folder
+        String fileName = "teams-fts.json";
+        ClassLoader classLoader = getClass().getClassLoader();
+        File file = new File(classLoader.getResource(fileName).getFile());
+        String result = null;
+        try {
+            result = IOUtils.toString(classLoader.getResourceAsStream(fileName));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
 
+        // Create the gson object (String json to Java object converter)
+        GsonBuilder b = new GsonBuilder();
+        b.registerTypeAdapter(Roster.class, new RosterDeserializer());
+        Gson gson = b.create();
+
+        // Start handling the firebase json object
+        JSONObject mainObject = new JSONObject(result);
+
+        // foreach team in teams
+        Iterator<?> keys = mainObject.keys();
+        while( keys.hasNext() ) {
+            String key = (String)keys.next();
+            if ( mainObject.get(key) instanceof JSONObject ) {
+                // get the team json
+                JSONObject teamJson = mainObject.getJSONObject(key);
+                // create the team java object from the team json
+                Team team = gson.fromJson(teamJson.toString(),Team.class);
+                // save the team object to the database
+                teamRepository.save(team);
+            }
+        }
+
+        //  The entire document is in the database - hizzah!
         System.out.println("Completed loading data");
 
-
-
-
     }
+
+
 }

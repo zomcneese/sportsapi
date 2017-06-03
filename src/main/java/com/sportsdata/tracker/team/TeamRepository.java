@@ -9,8 +9,9 @@ public interface TeamRepository extends CrudRepository<Team, String> {
 
     // finder methods or query methods
     // https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#repositories.query-methods
-    public List<Team> findByNameIgnoreCaseContaining(String name);
-    public List<Team> findByCityIgnoreCaseContaining(String city);
-    public List<Team> findByStateIgnoreCaseContaining(String state);
+    public List<Team> findByTeamNameIgnoreCaseContaining(String name);
+
+//    public List<Team> findByCityIgnoreCaseContaining(String city);
+//    public List<Team> findByStateIgnoreCaseContaining(String state);
 
 }
